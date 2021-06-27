@@ -56,20 +56,21 @@ wsServer.on('request', function (request) {
           console.log('login command')
           console.dir(sendedData)
           loginProcess();
-
           async function loginProcess() {
             redis.lpush('users', sendedData.senderName)
             redis.hset(`users_${sendedData.senderName}`, 'name', sendedData.senderName);
-
             const users = await getUsers()
             const result = {type: sendedData.type, senderName: sendedData.senderName, users: users }
             sendResultForClients(result)
           }
-
           break;
-
+        case 'setFields':
+          console.log('setFields command')
+          const result = {type: sendedData.type, fields: sendedData.fields }
+          sendResultForClients(result)
+          break;
         default:
-          console.log('undefined command')
+          console.log(`${sendedData.type} is undefined command`)
           break;
       }
     }
