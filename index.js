@@ -58,7 +58,7 @@ wsServer.on('request', function (request) {
           loginProcess();
           async function loginProcess() {
             redis.lpush('users', sendedData.senderName)
-            redis.hset(`users_${sendedData.senderName}`, 'name', sendedData.senderName);
+            redis.hset(`users_${sendedData.senderName}`, 'name', sendedData.senderName, 'standby', false );
             const users = await getUsers()
             const result = {type: sendedData.type, senderName: sendedData.senderName, users: users }
             sendResultForClients(result)
@@ -100,7 +100,24 @@ async function getUsers() {
     if(users[userName] === undefined) {
       users[userName] = {}
     }
+    // まとめて書けそう
     users[userName]['name'] = await redis.hget(`users_${userName}`, 'name')
+    const standby = await redis.hget(`users_${userName}`, 'standby')
+    users[userName]['standby'] = stringToBoolean(standby)
+  }
+
+  function stringToBoolean(str) {
+    switch (str) {
+      case 'true':
+        return true
+        break;
+      case 'false':
+        return false
+        break;
+      default:
+        return null
+        break;
+    }
   }
   return users;
 }
