@@ -39,52 +39,58 @@ const getUniqueID = () => {
 }
 
 wsServer.on('request', function (request) {
-  var userID = getUniqueID();
-  console.log(`Received a new connection from origin ${request.origin}.`);
+  console.log(Object.keys(clients).length)
+  if (Object.keys(clients).length >= 4) {
+    console.log('participant size over')
+    request.reject()
+  } else {
+    var userID = getUniqueID();
+    console.log(`Received a new connection from origin ${request.origin}.`);
 
-  const connection = request.accept(null, request.origin);
-  clients[userID] = connection;
+    const connection = request.accept(null, request.origin);
+    clients[userID] = connection;
 
-  console.log(`connected ${userID} in ${Object.getOwnPropertyNames(clients)}`);
+    console.log(`connected ${userID} in ${Object.getOwnPropertyNames(clients)}`);
 
-  connection.on('message', function(message) {
-    if (message.type === 'utf8') {
-      //let result = {}
-      sendedData = JSON.parse(message.utf8Data)
-      switch (sendedData.type) {
-        case 'login': {
-          console.log('login command')
-          console.dir(sendedData)
-          loginProcess();
-          async function loginProcess() {
-            redis.lpush('users', sendedData.senderName)
-            redis.hset(`users_${sendedData.senderName}`, 'name', sendedData.senderName, 'standby', false );
-            const users = await getUsers()
-            const result = {type: sendedData.type, senderName: sendedData.senderName, users: users }
-            sendResultForClients(result)
+    connection.on('message', function(message) {
+      if (message.type === 'utf8') {
+        //let result = {}
+        sendedData = JSON.parse(message.utf8Data)
+        switch (sendedData.type) {
+          case 'login': {
+            console.log('login command')
+            console.dir(sendedData)
+            loginProcess();
+            async function loginProcess() {
+              redis.lpush('users', sendedData.senderName)
+              redis.hset(`users_${sendedData.senderName}`, 'name', sendedData.senderName, 'standby', false );
+              const users = await getUsers()
+              const result = {type: sendedData.type, senderName: sendedData.senderName, users: users }
+              sendResultForClients(result)
+            }
+            break;
           }
-          break;
-        }
-        case 'setFields': {
-          // updateFieldsに変えたい
-          console.log('setFields command')
-          const result = {type: sendedData.type, fields: sendedData.fields }
-          sendResultForClients(result)
-          break;
-        }
-        case 'updateUsers': {
-          console.log('updateUsers command')
-          const result = {type: sendedData.type, users: sendedData.users }
-          sendResultForClients(result)
-          break;
-        }
-        default: {
-          console.log(`${sendedData.type} is undefined command`)
-          break;
+          case 'setFields': {
+            // updateFieldsに変えたい
+            console.log('setFields command')
+            const result = {type: sendedData.type, fields: sendedData.fields }
+            sendResultForClients(result)
+            break;
+          }
+          case 'updateUsers': {
+            console.log('updateUsers command')
+            const result = {type: sendedData.type, users: sendedData.users }
+            sendResultForClients(result)
+            break;
+          }
+          default: {
+            console.log(`${sendedData.type} is undefined command`)
+            break;
+          }
         }
       }
-    }
-  });
+    });
+  }
 });
 
 // redis
