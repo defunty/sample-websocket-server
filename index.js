@@ -49,10 +49,10 @@ wsServer.on('request', function (request) {
 
   connection.on('message', function(message) {
     if (message.type === 'utf8') {
-      let result = {}
+      //let result = {}
       sendedData = JSON.parse(message.utf8Data)
       switch (sendedData.type) {
-        case 'login':
+        case 'login': {
           console.log('login command')
           console.dir(sendedData)
           loginProcess();
@@ -64,14 +64,24 @@ wsServer.on('request', function (request) {
             sendResultForClients(result)
           }
           break;
-        case 'setFields':
+        }
+        case 'setFields': {
+          // updateFieldsに変えたい
           console.log('setFields command')
           const result = {type: sendedData.type, fields: sendedData.fields }
           sendResultForClients(result)
           break;
-        default:
+        }
+        case 'updateUsers': {
+          console.log('updateUsers command')
+          const result = {type: sendedData.type, users: sendedData.users }
+          sendResultForClients(result)
+          break;
+        }
+        default: {
           console.log(`${sendedData.type} is undefined command`)
           break;
+        }
       }
     }
   });
@@ -106,6 +116,7 @@ async function getUsers() {
     users[userName]['standby'] = stringToBoolean(standby)
   }
 
+  // 共通ファイルにまとめてどこからでも呼び出せるようにするべき
   function stringToBoolean(str) {
     switch (str) {
       case 'true':
