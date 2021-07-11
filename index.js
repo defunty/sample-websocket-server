@@ -41,7 +41,7 @@ const getUniqueID = () => {
 wsServer.on('request', function (request) {
   console.log(Object.keys(clients).length)
   if (Object.keys(clients).length >= 4) {
-    console.log('participant size over')
+    console.log('Max connection size now')
     request.reject()
   } else {
     var userID = getUniqueID();
@@ -83,8 +83,16 @@ wsServer.on('request', function (request) {
             sendResultForClients(result)
             break;
           }
+          case 'updateDices': {
+            console.log('updateDices command')
+            const result = {type: sendedData.type, dices: sendedData.dices }
+            sendResultForClients(result)
+            break;
+          }
           default: {
             console.log(`${sendedData.type} is undefined command`)
+            const result = { type: 'error', msg: `${sendedData.type} is undefined command` }
+            sendResultForClients(result)
             break;
           }
         }
